@@ -1,0 +1,19 @@
+{"name": "discord-events-bot",
+  "version": "1.0.0",
+  "description": "بوت فعاليات Discord متقدم مع نظام نقاط وإحصائيات",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node main.js",
+    "dev": "node --watch main.js"
+  },
+  "keywords": ["discord", "bot", "events", "games"],
+  "author": "dzsimo275",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "better-sqlite3": "^9.2.2"
+  },
+  "devDependencies": {}
+}
