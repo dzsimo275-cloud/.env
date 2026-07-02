@@ -29,7 +29,7 @@ const client = new Client({
 client.commands = new Collection();
 client.commandArray = [];
 
-// تحميل الأوامر
+// تحميل الأوامر من المجلدات الفرعية
 async function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
 
@@ -38,19 +38,38 @@ async function loadCommands() {
     return;
   }
 
-  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+  // الحصول على كل المجلدات الفرعية (events, games, stats, admin)
+  const folders = fs.readdirSync(commandsPath).filter(file => {
+    return fs.statSync(path.join(commandsPath, file)).isDirectory();
+  });
 
-  for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = await import(filePath);
-    const commandModule = command.default;
+  console.log(`${EMOJIS.success} تم العثور على ${folders.length} مجلدات أوامر\n`);
 
-    if (commandModule.data && commandModule.execute) {
-      client.commands.set(commandModule.data.name, commandModule);
-      client.commandArray.push(commandModule.data.toJSON());
-      console.log(`${EMOJIS.success} تم تحميل الأمر: ${commandModule.data.name}`);
+  // تحميل الأوامر من كل مجلد فرعي
+  for (const folder of folders) {
+    const folderPath = path.join(commandsPath, folder);
+    const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
+
+    console.log(`${EMOJIS.success} تحميل أوامر من مجلد: ${folder}`);
+
+    for (const file of commandFiles) {
+      const filePath = path.join(folderPath, file);
+      try {
+        const command = await import(`file://${filePath}`);
+        const commandModule = command.default;
+
+        if (commandModule.data && commandModule.execute) {
+          client.commands.set(commandModule.data.name, commandModule);
+          client.commandArray.push(commandModule.data.toJSON());
+          console.log(`  ✅ تم تحميل: ${commandModule.data.name}`);
+        }
+      } catch (error) {
+        console.error(`  ${EMOJIS.error} خطأ في تحميل ${file}:`, error.message);
+      }
     }
   }
+
+  console.log(`\n${EMOJIS.success} تم تحميل إجمالي ${client.commands.size} أمر\n`);
 }
 
 client.once('ready', async () => {
@@ -67,7 +86,7 @@ client.once('ready', async () => {
   // تسجيل الأوامر
   try {
     await client.application.commands.set(client.commandArray);
-    console.log(`${EMOJIS.success} تم تسجيل جميع الأوامر`);
+    console.log(`${EMOJIS.success} تم تسجيل ${client.commandArray.length} أمر في Discord\n`);
   } catch (error) {
     console.error(`${EMOJIS.error} خطأ في تسجيل الأوامر:`, error);
   }
